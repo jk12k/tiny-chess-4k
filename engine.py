@@ -377,8 +377,10 @@ def go(bd):
  return b0,sc,lg
 
 def bud(g,pl,tn,op):
- b=(70000000-used)//((tn-g)*60+(200-pl)//2+1)
- return b if b<150000 else 150000
+ t=130000 if op[0]=="d" else 160000 if op in ("nodes-100k","nodes-250k") else (180000 if tn>6 else 280000)
+ b=(75000000-used)//((tn-g)*60+(200-pl)//2+1)
+ f=t//4
+ return b if f<b<t else f if b<f else t
 
 
 def uci(m):
