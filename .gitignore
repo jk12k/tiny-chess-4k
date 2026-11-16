@@ -1,0 +1,17 @@
+engine.py
+test_engine.py
+analyze_game.py
+bench.py
+selfplay.py
+v8.py
+vmat.py
+vbb.py
+vbig.py
+vfast.py
+engine_dbg.py
+engine_dbg2.py
+engine_dbg3.py
+engine_cap.py
+_bench_tmp.py
+_hard_tmp.py
+__pycache__/
