@@ -42,7 +42,6 @@ Z=[];x=88172645463325252
 for _ in range(2074):x=x*6364136223846793005+1442695040888963407&0xFFFFFFFFFFFFFFFF;Z.append(x)
 ZS=Z[2048]
 ZC=Z[2049:2065]
-ZE=Z[2065:2074]
 B=[0]*128
 T=0
 C=0
@@ -121,9 +120,7 @@ def mk(m):
    ZK^=ZC[C]
    C&=~d
    ZK^=ZC[C]
- if E>=0:ZK^=ZE[(E&7)+1]
  E=f+16 if ty==1 and t-f==32 else f-16 if ty==1 and f-t==32 else -1
- if E>=0:ZK^=ZE[(E&7)+1]
  H=0 if ty==1 or ca else H+1
  T^=1
  ZK^=ZS
@@ -140,9 +137,7 @@ def um(m,u):
  ZK^=ZS
  ZK^=ZC[C]^ZC[u[3]]
  C=u[3]
- if E>=0:ZK^=ZE[(E&7)+1]
  E=u[4]
- if E>=0:ZK^=ZE[(E&7)+1]
  p=u[0]
  if p&7==6:
   K[T]=f
@@ -255,9 +250,10 @@ def qs(a,b,ply):
   if st>=b:return st
   if st>a:a=st
   bs=st;ms=gn(1)
- ms=[(mo(m,0,0),m) for m in ms]
+ ms=[mo(m,0,0)<<21|m for m in ms]
  ms.sort(reverse=True)
- for _,m in ms:
+ for x in ms:
+  m=x&2097151
   u=mk(m)
   if at(K[T^1],T):
    um(m,u)
@@ -294,7 +290,6 @@ def sr(d,a,b,ply,nz):
  if ck and ply<40:d+=1
  if nz and not ck and d>2 and P>0:
   e0=E
-  if E>=0:ZK^=ZE[(E&7)+1]
   E=-1
   T^=1
   ZK^=ZS
@@ -302,24 +297,22 @@ def sr(d,a,b,ply,nz):
   T^=1
   ZK^=ZS
   E=e0
-  if E>=0:ZK^=ZE[(E&7)+1]
   if AB:return 0
   if v>=b:return v
- ms=[(mo(m,ttm,ply),m) for m in gn()]
+ ms=[mo(m,ttm,ply)<<21|m for m in gn()]
  ms.sort(reverse=True)
  bs=-I
  bm=ttm
  oa=a
  i=0
- for _,m in ms:
+ for x in ms:
+  m=x&2097151
   u=mk(m)
   if at(K[T^1],T):
    um(m,u)
    continue
   t=m>>8&255
   q=B[t] or m>>16 or (t==E and B[m&255]&7==1)
-  if not q and i and d<3 and not ck and ev()+12*d<=a:
-   um(m,u);i+=1;continue
   if i:
    r=1+(i>5)+(i>14) if d>2 and not q and not ck and i>3 and ply>1 else 0
    v=-sr(d-1-r,-a-1,-a,ply+1,1)
@@ -340,7 +333,7 @@ def sr(d,a,b,ply,nz):
  if bs==-I:bs=ply-MT if ck else 0
  if len(TT)>400000:TT.clear()
  sv=bs-ply if bs<=127-MT else bs+ply if bs>=MT-127 else bs
- TT[ZK]=(d,2 if bs<=oa else 1 if bs>=b else 0,sv,bm)
+ if ZK not in TT or TT[ZK][0]<=d:TT[ZK]=(d,2 if bs<=oa else 1 if bs>=b else 0,sv,bm)
  return bs
 
 def go(bd):
@@ -383,10 +376,13 @@ def go(bd):
   lg.insert(0,bm)
  return b0,sc,lg
 
-def bud(g,pl):
- r=(8-g)*60+(200-pl)//2+1
- b=(55000000-used)//r
- return 25000 if b<25000 else 140000 if b>140000 else b
+def bud(g,pl,tn,op):
+ r=(tn-g)*60+(200-pl)//2+1
+ b=(70000000-used)//r
+ if op[0]=="d":b=b//2
+ elif op=="nodes-100k":b=b//2
+ if b<30000:b=30000
+ return b if (b<150000 or op[0]=="d") else 320000
 
 def uci(m):
  f=m&255
@@ -414,18 +410,17 @@ def pos(fen,moves):
  C=("K" in ps[2])+2*("Q" in ps[2])+4*("k" in ps[2])+8*("q" in ps[2])
  E=-1
  if ps[3]!="-":E=(int(ps[3][1])-1)*16+"abcdefgh".index(ps[3][0])
- ZK^=ZC[C]^ZE[0 if E<0 else (E&7)+1]
+ ZK^=ZC[C]
  if T:ZK^=ZS
  R[ZK]=1
  for mv in moves:mk(pmv(mv))
 
 def ps(path,body):
- for _ in range(3):
-  try:
-   rq=urllib.request.Request(U+path,data=json.dumps(body).encode(),headers={"content-type":"application/json"})
-   with urllib.request.urlopen(rq,timeout=30) as res:return json.load(res)
-  except Exception as e:
-   if getattr(e,"code",0)==400:return {"refused":1}
+ try:
+  rq=urllib.request.Request(U+path,data=json.dumps(body).encode(),headers={"content-type":"application/json"})
+  with urllib.request.urlopen(rq,timeout=30) as res:return json.load(res)
+ except Exception as e:
+  if getattr(e,"code",0)==400:return {"refused":1}
  sys.exit(1)
 
 def main():
@@ -433,13 +428,11 @@ def main():
  if not U:sys.exit("MAKEFUN_ENV_URL is not set")
  while 1:
   g=ps("/game",{})
-  if g.get("status")=="done":
-   print(g.get("wins"),g.get("draws"),g.get("losses"),file=sys.stderr)
-   return
+  if g.get("status")=="done":return
   while g.get("status")=="your_move":
    mv=g.get("moves") or []
    pos(g.get("start_fen") or g["fen"],mv)
-   b,sc,order=go(bud(g.get("game") or 8,len(mv)))
+   b,sc,order=go(bud(g.get("game") or 8,len(mv),g.get("games") or 8,g.get("opponent") or "nodes-2M"))
    used+=N
    if not b or sc<60-MT:
     ps("/resign",{"game":g["game"]})
