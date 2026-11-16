@@ -377,7 +377,7 @@ def go(bd):
  return b0,sc,lg
 
 def bud(g,pl,tn,op):
- t=130000 if op[0]=="d" else 160000 if op in ("nodes-100k","nodes-250k") else (180000 if tn>6 else 280000)
+ t=130000 if op[0]=="d" else 160000 if op=="nodes-100k" else (180000 if tn>6 else 280000)
  b=(75000000-used)//((tn-g)*60+(200-pl)//2+1)
  f=t//4
  return b if f<b<t else f if b<f else t
