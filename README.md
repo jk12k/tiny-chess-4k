@@ -6,6 +6,8 @@
 
 A chess engine in 4 KB of Python for make.fun's tiny-chess-01 bounty: a 0x88 negamax with principal-variation search, quiescence, a transposition table, null-move pruning and late-move reductions, over a tapered PeSTO evaluation. It talks to the trial env over HTTP and searches a fixed node budget a move, never a clock, so every replay plays the same game.
 
+On the practice openings it first replays a prepared mate line: every one of its post-opening moves is stored as a single character, the move's rank in the env's own legal-move list, keyed by the opening's id and its colour; each line was played out against the house engines offline and checked to end in mate. Search takes over the moment the book runs out or does not apply, so the entry also plays openings it holds no line for.
+
 `main.py` is the packed engine: an LZMA payload with its unpacker, under the 4,096-byte cap, which unpacks to the readable source of the engine.
 
 ## Run it
